@@ -1,120 +1,151 @@
 <?php
 //htmlを認識させる
 header('Content-Type: text/html; charset=UTF-8');
-  //XSS
-  function html_esc($word){
-    return htmlspecialchars($word,ENT_QUOTES,'UTF-8');
-  }
+//XSS
+function html_esc($word)
+{
+  return htmlspecialchars($word, ENT_QUOTES, 'UTF-8');
+}
 
-  //エラーの配列
-  $err = array(
-    'mark' => '',
-    'num' => ''
-  );
+//エラーの配列
+$err = array(
+  'mark' => '',
+  'num' => ''
+);
 
-  //生成する文字数、ラジオボタンの値
-  $piece = [6, 8, 10, 12, 16, 24, 32];
+//生成する文字数、ラジオボタンの値
+$piece = [6, 8, 10, 12, 16, 24, 32];
 
-  //生成されるワード候補の数
-  $li_length = 6;
-  for($i = 0; $i < $li_length; $i++){
-    $generation[$i] = '';
-  }
+//文字数の初期化
+$word_num = 0;
+
+//生成されるワード候補の数
+$li_length = 6;
+for ($i = 0; $i < $li_length; $i++) {
+  $generation[$i] = '';
+}
 //ワードが生成されたらツールチップのイベントを発火
-  $balloon = '';
+$balloon = '';
 
-  //文字列を配列に
-  $passStr_a = range('a','z');
-  $passStr_A = range('A','Z');
-  $passStr_int = range('0','9');
-  $passStr_mark = ['*','-','_','#','!','~','?'];
-  //配列を結合するarray_merge()
-  $passStr = array_merge($passStr_a,$passStr_A,$passStr_int,$passStr_mark);
-  $passstr_only = array_merge($passStr_a,$passStr_A,$passStr_int);
+//文字列を配列に
+$passStr_a = range('a', 'z');
+$passStr_A = range('A', 'Z');
+$passStr_int = range('0', '9');
+$passStr_mark = ['*', '-', '_', '#', '!', '~', '?'];
+//配列を結合するarray_merge()
+$passStr = array_merge($passStr_a, $passStr_A, $passStr_int, $passStr_mark);
+$passstr_only = array_merge($passStr_a, $passStr_A, $passStr_int);
 
-  //記号ありのパスワード生成
-  function creat_pass($length){
-    //関数内にグローバル変数をつけないと配列が読み込めない
-    global $passStr_int, $passStr,$passstr_only, $passStr_mark;
+//記号ありのパスワード生成
+function creat_pass($length)
+{
+  //関数内にグローバル変数をつけないと配列が読み込めない
+  global $passStr_int, $passStr, $passstr_only, $passStr_mark;
 
-    $creat_word = '';
-    for($i = 0; $i < $length; $i++){
-      //記号が文字列の先頭に来ないように設定
-      if($i === 0){
-        $creat_word .= $passStr[mt_rand(0, count($passstr_only)-1)];
-      } else {
-        $creat_word .= $passStr[mt_rand(0, count($passStr)-1)];
-      }
+  $creat_word = '';
+  for ($i = 0; $i < $length; $i++) {
+    //記号が文字列の先頭に来ないように設定
+    if ($i === 0) {
+      $creat_word .= $passStr[mt_rand(0, count($passstr_only) - 1)];
+    } else {
+      $creat_word .= $passStr[mt_rand(0, count($passStr) - 1)];
     }
-
-    //文字を一文字づつ配列化
-    $str_one = str_split($creat_word);
-    //生成文字に記号と数字が入っていなかったら記号と数字を一つ入れる
-    if(!array_intersect($str_one,$passStr_mark)){
-      //substr_replace( 置換対象の文字列, 置換する文字列, 開始位置 [, 範囲] )
-      //指定した配列からキーをランダムに抽出array_rand( 配列, 抽出する数 )
-      $creat_word = substr_replace($creat_word ,$passStr_mark[ array_rand( $passStr_mark ) ], 3,1);
-    }
-    if(!array_intersect($str_one,$passStr_int)){
-      $creat_word = substr_replace($creat_word ,$passStr_int[ array_rand( $passStr_int ) ], 2,1);
-    }
-    return $creat_word;
   }
 
-  // opennssl_random_pseudo_bytes関数、英数文字のみで記号は入らない
-  //文字数は16進法、引数は指定数の1/2
-  function str_only($length_str){
-    $str_only = bin2hex(openssl_random_pseudo_bytes($length_str));
-    return $str_only;
+  //文字を一文字づつ配列化
+  $str_one = str_split($creat_word);
+  //生成文字に記号と数字が入っていなかったら記号と数字を一つ入れる
+  if (!array_intersect($str_one, $passStr_mark)) {
+    //substr_replace( 置換対象の文字列, 置換する文字列, 開始位置 [, 範囲] )
+    //指定した配列からキーをランダムに抽出array_rand( 配列, 抽出する数 )
+    $creat_word = substr_replace($creat_word, $passStr_mark[array_rand($passStr_mark)], 3, 1);
+  }
+  if (!array_intersect($str_one, $passStr_int)) {
+    $creat_word = substr_replace($creat_word, $passStr_int[array_rand($passStr_int)], 2, 1);
+  }
+  return $creat_word;
+}
+
+// 記号なしパスワード生成（大文字小文字数字を含む）claudeで修正
+function str_only($length)
+{
+  global $passStr_a, $passStr_A, $passStr_int;
+  $str_chars = array_merge($passStr_a, $passStr_A, $passStr_int);
+  $pass = '';
+
+  for ($i = 0; $i < $length; $i++) {
+    $pass .= $str_chars[mt_rand(0, count($str_chars) - 1)];
   }
 
-  if($_SERVER['REQUEST_METHOD'] === 'POST'){
+  // 生成文字に大文字・小文字・数字が少なくとも1つずつ含まれるよう確認
+  $str_one = str_split($pass);
 
-    if(isset($_POST['mark'])){
-      $mark = html_esc($_POST['mark']);
-      $err['mark'] = '';
-    } else {
-      $err['mark'] = '<p class="err"><span class="material-icons-outlined">error_outline</span>未選択です</p>';
-      //空の場合を定義しておかないとnoticeが出る
-      $mark = '';
-    }
+  if (!array_intersect($str_one, $passStr_A)) {
+    $pass = substr_replace($pass, $passStr_A[array_rand($passStr_A)], mt_rand(1, $length - 1), 1);
+  }
 
-    if(isset($_POST['word_num'])){
-      $word_num = html_esc($_POST['word_num']);
-      $word_num = (int)$word_num;
-      $err['num'] = '';
-    } else {
-      $err['num'] ='<p class="err"><span class="material-icons-outlined">error_outline</span>未選択です</p>';
-    }
+  if (!array_intersect($str_one, $passStr_a)) {
+    $pass = substr_replace($pass, $passStr_a[array_rand($passStr_a)], mt_rand(1, $length - 1), 1);
+  }
 
-    switch($mark){
+  if (!array_intersect($str_one, $passStr_int)) {
+    $pass = substr_replace($pass, $passStr_int[array_rand($passStr_int)], mt_rand(1, $length - 1), 1);
+  }
+
+  return $pass;
+}
+
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $formValid = true; // フォームが有効かどうかのフラグ
+  $mark = ''; // デフォルト値を設定
+
+  // 記号の有無のチェック
+  if (isset($_POST['mark'])) {
+    $mark = html_esc($_POST['mark']);
+    $err['mark'] = '';
+  } else {
+    $err['mark'] = '<p class="err"><span class="material-icons-outlined">error_outline</span>未選択です</p>';
+    $formValid = false;
+  }
+
+  // 文字数のチェック
+  if (isset($_POST['word_num'])) {
+    $word_num = html_esc($_POST['word_num']);
+    $word_num = (int)$word_num;
+    $err['num'] = '';
+  } else {
+    $err['num'] = '<p class="err"><span class="material-icons-outlined">error_outline</span>未選択です</p>';
+    $formValid = false;
+  }
+
+  // 入力が有効な場合のみ処理を続行
+  if ($formValid) {
+    switch ($mark) {
       case '記号あり':
-        for($i = 0; $i < $li_length; $i++){
-        $generation[$i] = creat_pass($word_num);
+        for ($i = 0; $i < $li_length; $i++) {
+          $generation[$i] = creat_pass($word_num);
         }
         //ツールチップ表示
         $balloon = '<img class="balloon" src="image/balloon.svg" alt="コピー">';
         break;
       case '記号無し':
-        $word_num = $word_num / 2;
-        for($i = 0; $i < $li_length; $i++){
+        for ($i = 0; $i < $li_length; $i++) {
           $generation[$i] = str_only($word_num);
         }
         //ツールチップ表示
         $balloon = '<img class="balloon" src="image/balloon.svg" alt="コピー">';
         break;
       default:
-        for($i = 0; $i < $li_length; $i++){
-        $generation[$i] = '';
-        }
-        $balloon = '';
+        // 何も選択されていない場合は何もしない
         break;
     }
-
   }
+}
 ?>
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -127,7 +158,7 @@ header('Content-Type: text/html; charset=UTF-8');
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500&display=swap" rel="stylesheet">
   <!-- Outlined -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined"
-rel="stylesheet">
+    rel="stylesheet">
   <link rel="stylesheet" href="sanitize.css">
   <link rel="stylesheet" type="text/css" href="style.css">
   <!--お気に入りアイコン152x152-->
@@ -135,6 +166,7 @@ rel="stylesheet">
   <!--ファビコン32x32-->
   <link rel="shortcut icon" href="favicon.ico" type="image/vnd.microsoft.icon">
 </head>
+
 <body>
   <div class="wrapper">
 
@@ -153,7 +185,7 @@ rel="stylesheet">
       </section>
 
       <!-- form送信 -->
-      <form id="qrForm" method="post" action="">
+      <form id="qrForm" method="post" action="#submibtn">
         <div class="formGroup">
           <p class="groupNum"><span>1</span>記号入りか記号無しを選んでください</p>
           <?php echo $err['mark']; ?>
@@ -171,11 +203,13 @@ rel="stylesheet">
           <p class="groupNum"><span>2</span>文字数を選んでください</p>
           <?php echo $err['num']; ?>
           <div class="qrImg">
-            <?php $i = 0; while($i < count($piece)): ?>
+            <?php $i = 0;
+            while ($i < count($piece)): ?>
               <label class="wordNum">
                 <input type="radio" class="qrSize" name="word_num" value="<?php echo $piece[$i]; ?>"><?php echo $piece[$i]; ?>文字
               </label>
-            <?php $i++; endwhile; ?>
+            <?php $i++;
+            endwhile; ?>
           </div>
         </div>
         <!-- //.formGroup -->
@@ -187,17 +221,16 @@ rel="stylesheet">
       <div id="qr_panel">
         <p class="center">生成されたテキストをクリックするとコピーできます。選択中のものは色が変わります。</p>
         <ul class="export">
-          <?php for($i = 0; $i < $li_length; $i++): ?>
-          <li class="exportLi">
-            <?php echo $balloon; ?>
-            <div class="exportBox"><?php echo $generation[$i]; ?></div>
-          </li>
+          <?php for ($i = 0; $i < $li_length; $i++): ?>
+            <li class="exportLi">
+              <?php echo $balloon; ?>
+              <div class="exportBox"><?php echo $generation[$i]; ?></div>
+            </li>
           <?php endfor; ?>
         </ul>
       </div>
       <!-- //#qr_panel -->
-      <p>
-        英数字はopenssl_random_pseudo_bytes関数を使っています。<br>
+      <p>記号無しは英字（大文字・小文字）と数字のみで生成します。<br>
         記号を含めたものは先頭以外に記号が1文字以上入るようmt_rand関数で組み合わせて条件設定しています。<br>
         選んだWEBフォントのせいか数字の0と大文字Oの違いが分かりづらくなってしまいました。ちなみに小文字はo。
       </p>
@@ -212,37 +245,38 @@ rel="stylesheet">
     </main>
 
     <footer class="footer">
-    <a class="footerImg" href="#"><img src="image/github.svg" alt=""></a>
+      <a class="footerImg" href="https://github.com/mugikomugi/password_creat" target="_blank" rel="noopener"><img src="image/github.svg" alt=""></a>
       <small>Copyright 2022 Mugikomugi All Rights Reserved.</small>
     </footer>
 
   </div>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
   <script>
-    jQuery(function(){
+    jQuery(function() {
 
       //ツールチップを表示
-      jQuery('.exportLi').hover(function(){
-        jQuery('.balloon',this).stop().fadeIn(300);
-        },function(){
-          jQuery('.balloon',this).stop().fadeOut(300);
-        });
+      jQuery('.exportLi').hover(function() {
+        jQuery('.balloon', this).stop().fadeIn(300);
+      }, function() {
+        jQuery('.balloon', this).stop().fadeOut(300);
+      });
 
-    //生成されたワードをクリップボードにコピー
-    jQuery('.exportBox').on('click',function(){
+      //生成されたワードをクリップボードにコピー
+      jQuery('.exportBox').on('click', function() {
         const copyWord = jQuery(this).text();
         //コピーするにはtextareaに入れないと選択出来ない
-        jQuery(this).append('<textarea>'+copyWord+'</textarea>');
+        jQuery(this).append('<textarea>' + copyWord + '</textarea>');
         jQuery('textarea').select();
         //クリップボードにコピー
         document.execCommand('copy');
         jQuery('textarea').remove();
         //選択したワードをピックアップ
-        jQuery(this).parent('.exportLi').css('background','rgba(55, 201, 201, 0.3) url(image/icon_copy.svg) 99% center no-repeat').siblings('.exportLi').css('background','#fff url(image/icon_copy.svg) 99% center no-repeat');
+        jQuery(this).parent('.exportLi').css('background', 'rgba(55, 201, 201, 0.3) url(image/icon_copy.svg) 99% center no-repeat').siblings('.exportLi').css('background', '#fff url(image/icon_copy.svg) 99% center no-repeat');
         console.log(copyWord);
       });
 
-  });
+    });
   </script>
 </body>
+
 </html>
