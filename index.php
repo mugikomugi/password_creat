@@ -116,7 +116,7 @@ function str_small($length)
     );
   }
 
-  // 最低でも1つの番号を確保する
+  // Ensure at least one number
   if (!preg_match('/[0-9]/', $pass)) {
     $pass = substr_replace(
       $pass,
