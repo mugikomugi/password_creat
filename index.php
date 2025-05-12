@@ -106,9 +106,6 @@ function str_small($length)
     $pass .= $str_chars[mt_rand(0, count($str_chars) - 1)];
   }
 
-  // 生成文字に大文字・小文字・数字が少なくとも1つずつ含まれるよう確認
-  $str_one = str_split($pass);
-
   // 小文字が含まれていない場合
   if (!preg_match('/[a-z]/', $pass)) {
     $pass = substr_replace(
