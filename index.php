@@ -95,6 +95,43 @@ function str_only($length)
   return $pass;
 }
 
+// 生成文字に小文字・数字が少なくとも1つずつ含まれるよう確認
+function str_small($length)
+{
+  global $passStr_a, $passStr_int;
+  $str_chars = array_merge($passStr_a, $passStr_int);
+  $pass = '';
+
+  for ($i = 0; $i < $length; $i++) {
+    $pass .= $str_chars[mt_rand(0, count($str_chars) - 1)];
+  }
+
+  // 生成文字に大文字・小文字・数字が少なくとも1つずつ含まれるよう確認
+  $str_one = str_split($pass);
+
+  // 小文字が含まれていない場合
+  if (!preg_match('/[a-z]/', $pass)) {
+    $pass = substr_replace(
+      $pass,
+      $passStr_a[array_rand($passStr_a)],
+      mt_rand(1, $length - 1),
+      1
+    );
+  }
+
+  // 最低でも1つの番号を確保する
+  if (!preg_match('/[0-9]/', $pass)) {
+    $pass = substr_replace(
+      $pass,
+      $passStr_int[array_rand($passStr_int)],
+      mt_rand(1, $length - 1),
+      1
+    );
+  }
+
+  return $pass;
+}
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $formValid = true; // フォームが有効かどうかのフラグ
@@ -125,6 +162,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       case '記号あり':
         for ($i = 0; $i < $li_length; $i++) {
           $generation[$i] = creat_pass($word_num);
+        }
+        //ツールチップ表示
+        $balloon = '<img class="balloon" src="image/balloon.svg" alt="コピー">';
+        break;
+      case '記号無し英数小文字':
+        for ($i = 0; $i < $li_length; $i++) {
+          $generation[$i] = str_small($word_num);
         }
         //ツールチップ表示
         $balloon = '<img class="balloon" src="image/balloon.svg" alt="コピー">';
@@ -190,6 +234,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <p class="groupNum"><span>1</span>記号入りか記号無しを選んでください</p>
           <?php echo $err['mark']; ?>
           <div class="qrImg">
+            <label class="qrBox">
+              <input type="radio" class="qrSize" name="mark" value="記号無し英数小文字">英数小文字<span class="notesB">記号無し</span>
+            </label>
             <label class="qrBox">
               <input type="radio" class="qrSize" name="mark" value="記号無し">英数大小文字<span class="notesB">記号無し</span>
             </label>
